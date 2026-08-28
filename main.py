@@ -7,7 +7,7 @@ from fastapi import FastAPI, Query, HTTPException, Response
 from fastapi.middleware.cors import CORSMiddleware
 
 # ── Config ──────────────────────────────────────────────
-API_KEY = os.environ.get("API_KEY", "psychoxd")  # 🔥 teri key
+API_KEY = os.environ.get("API_KEY", "psychoxd")  # 🔥 Default key
 DEVELOPER = "@psychopathmc"
 BASE_URL = "https://huggingface.co/datasets/Kzr0xx/icrm-hitek-full-db-mixed/resolve/main"
 
@@ -41,7 +41,7 @@ def fetch_filter(url: str, column: str, value: str, limit: int = 10):
 def root():
     return {
         "app": "ICMR + HITEK Search API",
-        "records": 2_504_793_870,
+        "records": 2504793870,
         "indexes": {"phone": True, "aadhar": True},
         "index_source": "remote",
         "columns": ["name", "fathersName", "phoneNumber", "aadharNumber", "otherNumber", "address", "district", "pincode", "state", "town", "source"],
