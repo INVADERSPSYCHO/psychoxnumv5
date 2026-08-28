@@ -7,7 +7,7 @@ from fastapi import FastAPI, Query, HTTPException, Response
 from fastapi.middleware.cors import CORSMiddleware
 
 # ── Config ──────────────────────────────────────────────
-API_KEY = os.environ.get("API_KEY", "psychoxd")  # 🔥 Default key
+API_KEY = "psychoxd"  # 🔥 Hardcoded — environment ki zaroorat nahi
 DEVELOPER = "@psychopathmc"
 BASE_URL = "https://huggingface.co/datasets/Kzr0xx/icrm-hitek-full-db-mixed/resolve/main"
 
@@ -21,9 +21,9 @@ app.add_middleware(
 )
 
 # ── Helper: fetch & filter Parquet ────────────────────
-def fetch_filter(url: str, column: str, value: str, limit: int = 10):
+def fetch_filter(url: str, column: str, value: str, limit: int = 5):
     try:
-        resp = requests.get(url, timeout=15)
+        resp = requests.get(url, timeout=10)  # ⏱️ 10 sec timeout
         if resp.status_code != 200:
             return []
         table = pq.read_table(io.BytesIO(resp.content))
@@ -41,7 +41,7 @@ def fetch_filter(url: str, column: str, value: str, limit: int = 10):
 def root():
     return {
         "app": "ICMR + HITEK Search API",
-        "records": 2504793870,
+        "records": 2_504_793_870,
         "indexes": {"phone": True, "aadhar": True},
         "index_source": "remote",
         "columns": ["name", "fathersName", "phoneNumber", "aadharNumber", "otherNumber", "address", "district", "pincode", "state", "town", "source"],
@@ -57,10 +57,10 @@ def health():
 def search(
     q: str | None = Query(None),
     mobile: str | None = Query(None),
-    key: str = Query(..., description="API Key required"),
-    limit: int = Query(10, ge=1, le=50),
+    key: str = Query(None),  # Optional now, but we check
+    limit: int = Query(5, ge=1, le=20),  # 🔥 Limit 5 for speed
 ):
-    # 🔥 Key check
+    # 🔥 Key check — hardcoded
     if key != API_KEY:
         raise HTTPException(status_code=401, detail="Invalid or missing API key")
 
@@ -68,24 +68,21 @@ def search(
     if not query:
         raise HTTPException(422, "Provide q or mobile")
 
-    # Determine which shard to hit based on last digit
+    # Shard based on last digit
     last_digit = query[-1]
-    shard = int(last_digit) % 7  # 0 to 6
+    shard = int(last_digit) % 7
 
-    # Phone index
+    # Try phone index first
     phone_url = f"{BASE_URL}/idx_phone.{shard}.parquet"
-    phone_results = fetch_filter(phone_url, "phoneNumber", query, limit)
+    results = fetch_filter(phone_url, "phoneNumber", query, limit)
 
-    # If phone not found, try aadhar
-    results = phone_results
+    # If no phone, try aadhar
     if not results:
         aadhar_url = f"{BASE_URL}/idx_aadhar.{shard}.parquet"
         results = fetch_filter(aadhar_url, "aadharNumber", query, limit)
 
-    # Build response
-    found = len(results) > 0
     return {
-        "success": found,
+        "success": len(results) > 0,
         "query": query,
         "count": len(results),
         "results": results,
