@@ -9,7 +9,7 @@ from fastapi.middleware.cors import CORSMiddleware
 # ── Config ──────────────────────────────────────────────
 API_KEY = "psychoxd"  # 🔥 Hardcoded — environment ki zaroorat nahi
 DEVELOPER = "@psychopathmc"
-BASE_URL = "https://huggingface.co/datasets/Kzr0xx/icrm-hitek-full-db-mixed/resolve/main"
+BASE_URL = ""
 
 app = FastAPI(title="ICMR + HITEK Search API", version="1.0")
 
